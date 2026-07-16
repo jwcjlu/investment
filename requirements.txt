@@ -1,0 +1,7 @@
+anthropic>=0.69
+ebooklib>=0.18
+beautifulsoup4>=4.12
+pypdf>=5.1
+notion-client>=2.2
+python-dotenv>=1.0
+pytest>=8.3
