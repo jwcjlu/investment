@@ -123,22 +123,26 @@ git commit -m "feat(curriculum): AI quiz generation with disk cache"
 - [ ] **Step 1: 失败测试（TestClient）**
 
 夹具 cache + tmp curriculum_dir，`enable_ai_intro=False`：
-- `GET /api/modules` → 200，含模块  
-- `GET /api/daily` → lesson_ids 长度 ≤ 5  
-- `POST /api/daily/more` → 含 `added`  
-- `GET /api/quiz?tag=`（encode）→ questions 非空（占位）  
-- `POST /api/quiz/submit` → 返回 score  
+- `GET /api/modules` → 200，含模块；空 cache 时友好字段/空列表  
+- `GET /api/daily` → `lesson_ids` 长度 ≤ 5；响应含 `tag`、`extra_batches`、每课展示字段（opinion 摘要等）  
+- `GET /api/daily?tag=` → 焦点为指定 tag  
+- `POST /api/daily/more` → 含 `added`；刷完时 `added: 0`  
+- `GET /api/quiz?tag=`（encode，含 slash tag）→ questions 非空（占位）  
+- `GET /api/quiz?daily=1` → 使用 daily.json 的 tag 题库  
+- `GET /api/quiz?tag=&force=1` → 可强制重建（mock AI）  
+- `POST /api/quiz/submit` body `{ "tag": "...", "answers": { "q1": 0 } }` → 返回 score + details  
 
 - [ ] **Step 2: 实现路由**
 
 在 `create_app` 中注册（注意 slash tag 用 `{encoded_tag:path}`）：
 - 现有 progress API 保留并挂到 `/api/progress`  
 - 新：`/api/modules`、`/api/modules/{encoded_tag:path}`、`/api/lessons/{encoded_id}`（query `tag` 必填）、`/api/daily`、`/api/daily/more`、`/api/quiz`、`/api/quiz/submit`  
-- 模块详情含 intro（`get_or_create_intro`）  
-- lesson 响应含 `next_lesson_id`（同 tag 模块内）  
+- 模块详情含 intro（`get_or_create_intro`）+ `encoded_tag`  
+- lesson 响应含：`encoded_id`、`argument_summary`、`quote`、章节笔记字段、`next_lesson_id`、`next_encoded_id`（同 tag 模块内）  
+- `GET /api/quiz?daily=1`：读 `daily.json.tag` 再 `get_or_create_quiz`  
 - CLI 增加 `--rebuild-quizzes`  
 
-序列化：dataclass → dict（可用 `asdict` 或手写 API schema）。
+序列化：dataclass → dict；**一律附带 `encoded_tag` / `encoded_id`** 供 SPA 使用。
 
 - [ ] **Step 3: commit**
 
@@ -158,6 +162,7 @@ git commit -m "feat: expose JSON API for SPA learning UX"
 - [ ] **Step 1: 创建项目**
 
 ```bash
+mkdir web
 cd web
 npm create vite@latest . -- --template react-ts
 npm install
@@ -171,8 +176,12 @@ server: { proxy: { '/api': 'http://127.0.0.1:8765' } }
 
 - [ ] **Step 2: 最小 App 路由骨架**
 
-路由：`/`、`/module/:tag`、`/lesson/:id`、`/quiz`  
-`src/api.ts`：`fetch` 封装 `getModules`、`getDaily` 等。
+**Slash tag（必做）：** 不要用 `/module/:tag`（单段）。使用 React Router splat：
+- `/module/*` → `const tag = useParams()['*']`（已是解码后的 tag，或再 `decodeURIComponent`）
+- `/lesson/:id` 的 `id` 用 `encodeURIComponent(encoded_id from API)`；query 必带 `?tag=`
+
+路由：`/`、`/module/*`、`/lesson/:id`、`/quiz`  
+`src/api.ts`：`fetch` 封装 `getModules`、`getDaily`、`getQuiz({tag}|{daily:true})` 等。
 
 - [ ] **Step 3: commit**
 
@@ -243,9 +252,15 @@ git commit -m "feat(web): learning UX pages for daily, lessons, quizzes"
 "build": "tsc -b && vite build --outDir ../static/spa --emptyOutDir"
 ```
 
-- [ ] **Step 2: FastAPI 托管**
+- [ ] **Step 2: FastAPI 托管（主路径 = SPA）**
 
-若 `static/spa/index.html` 存在：`StaticFiles` + catch-all 回退。  
+若 `static/spa/index.html` 存在：
+1. **禁用/移除** Jinja HTML 路由（`/`、`/module/...`、`/lesson/...`），或统一 302 到 SPA 等价路径；不得继续渲染旧 Jinja 首页。  
+2. `app.mount("/assets", StaticFiles(...))` 等按 Vite build 结构挂载。  
+3. catch-all `GET /{full_path:path}`：非 `/api` 前缀时返回 `spa/index.html`（注册顺序在 `/api` 之后）。  
+4. 保留现有 `/static`（旧 CSS）不覆盖 SPA assets。  
+
+若尚无 build：可临时保留 Jinja，但 README 写明须先 `npm run build`。  
 开发仍用 Vite proxy。
 
 - [ ] **Step 3: README**

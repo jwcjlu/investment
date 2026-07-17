@@ -1,7 +1,7 @@
 # 设计文档：学习路径体验增强（SPA + 导读/拆短/练习/每日节奏）
 
 - 日期：2026-07-17
-- 状态：评审已通过；待用户复核
+- 状态：用户已确认；实现计划见 `docs/superpowers/plans/2026-07-17-learning-ux-enhancement.md`
 - 作者：与用户协作 brainstorm 产出
 - 前置：`docs/superpowers/specs/2026-07-17-learning-path-website-design.md`（子项目 B MVP）
 
