@@ -99,15 +99,31 @@ curriculum/
 - 缓存：`curriculum/quizzes/{safe_tag}.json`；`--rebuild-quizzes` 或 API `force=1` 可重建。  
 - 入口：  
   - **模块测**：`GET /api/quiz?tag=` → SPA `/quiz?tag=`  
-  - **今日测**：完成今日清单后引导；`GET /api/quiz?daily=1`（从今日课涉及的标签抽题或合并当日焦点模块题集；MVP 可简化为：用今日清单所属焦点模块的题库）。  
+  - **今日测**：完成今日清单后引导；`GET /api/quiz?daily=1` → **MVP 固定使用** `daily.json` 中的焦点 `tag` 对应题库（与模块测同一套缓存）。  
 - `POST /api/quiz/submit`：提交选项，返回对错与解析；可选写入 `progress` 旁的 quiz 成绩字段（YAGNI：MVP 只返回结果，不强制存历史）。
 
 ### 4. 每日软配额
-- 焦点模块：`progress.last_lesson_id` 所属模块；否则第一个仍有未学「原则」的模块。  
+- **焦点模块**判定（按序取第一条命中）：  
+  1. 若请求/会话带来源 `tag`（例如从某模块课表进入），用该 tag；  
+  2. 否则若 `progress.last_lesson_id` 能在某个模块课表中找到：取 **`FIXED_TAGS` 顺序下第一个**包含该 lesson 的模块（多标签观点时的稳定规则）；  
+  3. 否则取第一个仍有未学「原则」的模块；都没有则今日清单为空并提示。  
 - 每日从焦点模块取最多 **5** 则：`actionability == 原则` 且未在 `completed` 中。  
-- 状态文件 `curriculum/daily.json`：`{ date, tag, lesson_ids, extra_batches }`。跨自然日自动重建。  
-- `POST /api/daily/more`：再追加最多 5 则未学原则（同规则）。  
+- 状态文件 `curriculum/daily.json`：
+  ```json
+  {
+    "date": "YYYY-MM-DD",
+    "tag": "估值",
+    "lesson_ids": ["...", "..."],
+    "extra_batches": 0
+  }
+  ```
+  - `extra_batches`：当日用户点击「再学 5 则」的**次数**（整数，从 0 起）。用于统计/调试；清单内容以 `lesson_ids` 为准。  
+  - 跨自然日（`date` ≠ 今天）自动重建：`lesson_ids` 重算，`extra_batches = 0`。  
+- `POST /api/daily/more`：在焦点模块中再追加最多 5 则未学原则（排除已在 `lesson_ids` 与 `completed` 中的）。  
+  - 若可追加数量为 0：HTTP 200，返回当前清单 + `added: 0`，SPA 提示「本模块今日原则已刷完，可换模块或自由浏览」。  
+  - 若不足 5 则：追加实际剩余数量，`added` 为实际条数。  
 - **不**拦截用户进入其它模块自由学习；首页优先展示今日清单。  
+- 首页保留「继续上次」入口（链到 `last_lesson_id` + 其焦点模块 tag），与今日清单并存。  
 - 今日清单全部标记已学后，SPA 显示「去做今日小测」CTA。
 
 ## API 一览
@@ -116,22 +132,24 @@ curriculum/
 |---|---|---|
 | GET | `/api/modules` | 模块列表 + 进度 |
 | GET | `/api/modules/{encoded_tag}` | 导读 + 课表（tag 含 `/` 时用 path/编码规则，与现站一致） |
-| GET | `/api/lessons/{encoded_id}?tag=` | 观点课 + 可选章节 |
+| GET | `/api/lessons/{encoded_id}?tag=` | 观点课 + 可选章节；**`tag` 必填**（决定下一课所属模块） |
 | POST | `/api/progress/complete` | `{ lesson_id }` |
 | GET | `/api/progress` | 进度 JSON |
 | GET | `/api/daily` | 今日清单 |
-| POST | `/api/daily/more` | 再学 5 则 |
-| GET | `/api/quiz?tag=` / `?daily=1` | 取题（可触发 AI） |
+| POST | `/api/daily/more` | 再学 5 则；响应含 `added` |
+| GET | `/api/quiz?tag=` / `?daily=1` | 取题（可触发 AI）；可选 `force=1` 重建 |
 | POST | `/api/quiz/submit` | 交卷判分 |
+
+CLI（与现站风格一致）：`--rebuild-intros`、`--rebuild-quizzes`、`--no-ai-intro`。
 
 ## 前端页面
 
 | 路由 | 内容 |
 |---|---|
-| `/` | 今日清单、再学 5 则、模块卡片入口、完成后今日小测 CTA |
-| `/module/:tag` | 导读开场 + 课表 + 开始练习 |
-| `/lesson/:id` | 拆短课页 |
-| `/quiz` | 答题 UI（模块 / 每日） |
+| `/` | 今日清单、再学 5 则、继续上次、模块卡片、完成后今日小测 CTA |
+| `/module/:tag` | 导读开场 + 课表 + 开始练习（`tag` 为编码后的 path 段） |
+| `/lesson/:id?tag=` | 拆短课页；**必须带 `tag` query**（从今日清单/模块课表跳转时写入） |
+| `/quiz?tag=` / `/quiz?daily=1` | 答题 UI |
 
 视觉：清晰阅读向，少装饰；不用营销落地页式布局。
 
