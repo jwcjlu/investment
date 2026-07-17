@@ -1,8 +1,9 @@
 .env
 __pycache__/
 *.pyc
-output/
 .venv/
 venv/
 .pytest_cache/
 .superpowers/
+curriculum/
+output/.cache/_last_llm_failure.txt
