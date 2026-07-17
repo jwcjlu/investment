@@ -6,3 +6,4 @@ output/
 venv/
 .pytest_cache/
 .superpowers/
+/curriculum/
