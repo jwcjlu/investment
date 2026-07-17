@@ -1,7 +1,7 @@
 # 设计文档：学习路径体验增强（SPA + 导读/拆短/练习/每日节奏）
 
 - 日期：2026-07-17
-- 状态：待用户复核 spec
+- 状态：评审已通过；待用户复核
 - 作者：与用户协作 brainstorm 产出
 - 前置：`docs/superpowers/specs/2026-07-17-learning-path-website-design.md`（子项目 B MVP）
 
@@ -135,8 +135,8 @@ curriculum/
 | GET | `/api/lessons/{encoded_id}?tag=` | 观点课 + 可选章节；**`tag` 必填**（决定下一课所属模块） |
 | POST | `/api/progress/complete` | `{ lesson_id }` |
 | GET | `/api/progress` | 进度 JSON |
-| GET | `/api/daily` | 今日清单 |
-| POST | `/api/daily/more` | 再学 5 则；响应含 `added` |
+| GET | `/api/daily` | 今日清单；可选 `?tag=` 指定焦点模块（写入/重建 `daily.json`） |
+| POST | `/api/daily/more` | 再学 5 则；成功追加时 `extra_batches += 1`；响应含 `added` |
 | GET | `/api/quiz?tag=` / `?daily=1` | 取题（可触发 AI）；可选 `force=1` 重建 |
 | POST | `/api/quiz/submit` | 交卷判分 |
 
