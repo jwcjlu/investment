@@ -43,6 +43,38 @@ def test_module_page_ok_with_encoded_tag(tmp_path):
     assert "估值很重要" in r.text
 
 
+def test_module_page_ok_with_slash_in_tag(tmp_path):
+    """标签含 '/'（如 护城河/竞争优势）时，encode_tag 会产出 %2F；
+    真实 ASGI 服务器在路由匹配前会把 %2F 解码为 '/'，
+    因此路由必须能匹配含 '/' 的路径段，否则 404。"""
+    app = create_app(
+        cache_root=str(FIXTURE),
+        curriculum_dir=str(tmp_path / "curriculum"),
+        enable_ai_intro=False,
+    )
+    tag = "护城河/竞争优势"
+    r = TestClient(app).get(f"/module/{encode_tag(tag)}")
+    assert r.status_code == 200
+    assert "护城河决定长期回报" in r.text
+
+
+def test_homepage_links_to_slash_tag_module(tmp_path):
+    app = create_app(
+        cache_root=str(FIXTURE),
+        curriculum_dir=str(tmp_path / "curriculum"),
+        enable_ai_intro=False,
+    )
+    client = TestClient(app)
+    tag = "护城河/竞争优势"
+    encoded = encode_tag(tag)
+
+    index_html = client.get("/").text
+    assert f"/module/{encoded}" in index_html
+
+    r = client.get(f"/module/{encoded}")
+    assert r.status_code == 200
+
+
 def test_lesson_page_ok_and_progress_roundtrip(tmp_path):
     app = create_app(
         cache_root=str(FIXTURE),

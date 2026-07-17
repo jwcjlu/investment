@@ -128,7 +128,10 @@ def create_app(
             },
         )
 
-    @app.get("/module/{encoded_tag}")
+    # `:path` (not the default str converter, which excludes '/') is required because
+    # ASGI servers decode %2F to '/' before route matching, and tags like
+    # "护城河/竞争优势" produce an encoded_tag containing '/'.
+    @app.get("/module/{encoded_tag:path}")
     def module_page(encoded_tag: str, request: Request):
         tag = decode_tag(encoded_tag)
         module = next((m for m in app.state.modules if m.tag == tag), None)

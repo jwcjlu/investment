@@ -1,0 +1,19 @@
+{
+  "chapter_index": 1,
+  "chapter_title": "第1章",
+  "core_points": ["点"],
+  "arguments": [],
+  "actionables": [],
+  "quotes": [],
+  "opinions": [
+    {
+      "opinion": "护城河决定长期回报",
+      "chapter": "第1章",
+      "tags": ["护城河/竞争优势"],
+      "argument_summary": "论据",
+      "actionability": "原则",
+      "quote": "金句"
+    }
+  ],
+  "suggested_tags": []
+}
