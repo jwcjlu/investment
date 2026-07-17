@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.opinion }} · 投资学习路径{% endblock %}
+{% block content %}
+
+<nav class="breadcrumb">
+  <a href="/">首页</a> / <a href="/module/{{ encoded_tag }}">{{ tag }}</a>
+</nav>
+
+<article class="lesson">
+  <h1>{{ lesson.opinion }}</h1>
+  <p class="lesson-meta">《{{ lesson.book_title }}》{{ lesson.chapter }} ·
+    <span class="actionability-badge">{{ lesson.actionability }}</span>
+  </p>
+
+  <section>
+    <h2>论据摘要</h2>
+    <p>{{ lesson.argument_summary }}</p>
+  </section>
+
+  <section>
+    <h2>原文金句</h2>
+    <blockquote>{{ lesson.quote }}</blockquote>
+  </section>
+
+  <section class="chapter-expand">
+    {% if expanded and chapter_note %}
+      <h2>章节笔记：{{ chapter_note.chapter_title }}</h2>
+      <h3>核心观点</h3>
+      <ul>{% for p in chapter_note.core_points %}<li>{{ p }}</li>{% endfor %}</ul>
+      <h3>论据</h3>
+      <ul>{% for a in chapter_note.arguments %}<li>{{ a }}</li>{% endfor %}</ul>
+      <h3>可执行建议</h3>
+      <ul>{% for a in chapter_note.actionables %}<li>{{ a }}</li>{% endfor %}</ul>
+      <h3>原文金句</h3>
+      <ul>{% for q in chapter_note.quotes %}<li>{{ q }}</li>{% endfor %}</ul>
+    {% elif expanded %}
+      <p class="hint">未找到该章节的笔记。</p>
+    {% else %}
+      <a href="/lesson/{{ encoded_id }}?tag={{ encoded_tag }}&expand=1">展开本章笔记 →</a>
+    {% endif %}
+  </section>
+
+  <section class="lesson-actions">
+    <button id="complete-btn" data-lesson-id="{{ lesson.lesson_id }}">
+      {% if completed %}✅ 已学完（再次标记）{% else %}标记为已学{% endif %}
+    </button>
+    {% if next_lesson %}
+      <a id="next-link" class="next-lesson" href="/lesson/{{ next_encoded_id }}?tag={{ encoded_tag }}">下一课：{{ next_lesson.opinion }} →</a>
+    {% else %}
+      <a class="next-lesson" href="/module/{{ encoded_tag }}">本模块已学完，返回模块 →</a>
+    {% endif %}
+  </section>
+</article>
+
+<script>
+  const btn = document.getElementById("complete-btn");
+  btn.addEventListener("click", async () => {
+    await fetch("/api/progress/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lesson_id: btn.dataset.lessonId }),
+    });
+    const nextLink = document.getElementById("next-link");
+    if (nextLink) {
+      window.location.href = nextLink.href;
+    } else {
+      window.location.reload();
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}投资学习路径 · 首页{% endblock %}
+{% block content %}
+
+{% if not has_modules %}
+  <section class="empty-state">
+    <h1>还没有可学习的内容</h1>
+    <p>请先用 <code>read_book.py</code> 精读至少一本书，生成本地缓存后再回来：</p>
+    <pre><code>python read_book.py 你的书.epub --author 作者名</code></pre>
+    <p>精读完成后刷新本页即可看到主题模块。</p>
+  </section>
+{% else %}
+
+  {% if continue_lesson %}
+    <section class="continue-banner">
+      <a href="/lesson/{{ continue_lesson.encoded_id }}?tag={{ continue_lesson.encoded_tag }}">
+        继续上次学习：{{ continue_lesson.opinion }} →
+      </a>
+    </section>
+  {% endif %}
+
+  <h1>主题模块</h1>
+  <p class="hint">已学 {{ completed_count }} 则观点。选择一个主题开始，课表按「原则 → 可直接执行 → 需自己判断」排列。</p>
+
+  <div class="module-grid">
+    {% for m in modules %}
+      <a class="module-card" href="/module/{{ m.encoded_tag }}">
+        <h2>{{ m.tag }}</h2>
+        <p class="module-meta">{{ m.count }} 则观点 · 已学 {{ m.done_count }}</p>
+        {% if m.difficulty %}<span class="difficulty-badge">{{ m.difficulty }}</span>{% endif %}
+      </a>
+    {% endfor %}
+  </div>
+
+{% endif %}
+
+{% endblock %}
