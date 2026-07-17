@@ -8,21 +8,29 @@ from engine.curriculum.quiz_writer import (
 )
 
 
-def _mod(tag: str = "估值"):
-    return Module(
-        tag=tag,
-        lessons=[
+def _mod(tag: str = "估值", *, lessons=None):
+    if lessons is None:
+        lessons = [
             Lesson("id1", "书A", "章1", 1, "低估值买入", "论据A", "原则", "金句A", [tag]),
             Lesson("id2", "书B", "章2", 2, "安全边际", "论据B", "原则", "金句B", [tag]),
-        ],
-    )
+        ]
+    return Module(tag=tag, lessons=lessons)
 
 
 def test_placeholder_quiz_has_2_to_3_questions():
     quiz = placeholder_quiz(_mod())
     assert quiz["tag"] == "估值"
     assert quiz["source"] == "placeholder"
-    assert 2 <= len(quiz["questions"]) <= 3
+    assert len(quiz["questions"]) == 2
+
+
+def test_placeholder_quiz_single_lesson_has_two_questions():
+    quiz = placeholder_quiz(_mod(lessons=[
+        Lesson("id1", "书A", "章1", 1, "低估值买入", "论据A", "原则", "金句A", ["估值"]),
+    ]))
+    assert len(quiz["questions"]) == 2
+    assert quiz["questions"][0]["id"] == "q1"
+    assert quiz["questions"][1]["id"] == "q2"
     q = quiz["questions"][0]
     assert q["id"]
     assert q["stem"]
@@ -67,3 +75,51 @@ def test_grade_submission():
     assert by_id[q1["id"]]["correct"] is True
     assert by_id[q2["id"]]["correct"] is False
     assert by_id[q1["id"]]["explanation"]
+
+
+def test_ai_failure_falls_back_to_placeholder(tmp_path, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("AI unavailable")
+
+    monkeypatch.setattr("engine.curriculum.quiz_writer.generate_ai_quiz", boom)
+    quiz = get_or_create_quiz(_mod(), str(tmp_path), use_ai=True)
+    assert quiz["source"] == "placeholder"
+    assert len(quiz["questions"]) == 2
+    loaded = load_quiz("估值", str(tmp_path))
+    assert loaded["source"] == "placeholder"
+
+
+def test_force_bypasses_cache(tmp_path, monkeypatch):
+    calls = {"n": 0}
+    ai_quiz = {
+        "tag": "估值",
+        "source": "ai",
+        "questions": [
+            {
+                "id": "q1",
+                "stem": "AI 题1",
+                "options": ["A", "B", "C", "D"],
+                "answer_index": 0,
+                "explanation": "解析1",
+            },
+            {
+                "id": "q2",
+                "stem": "AI 题2",
+                "options": ["A", "B", "C", "D"],
+                "answer_index": 1,
+                "explanation": "解析2",
+            },
+        ],
+    }
+
+    def fake_ai(module):
+        calls["n"] += 1
+        return ai_quiz
+
+    monkeypatch.setattr("engine.curriculum.quiz_writer.generate_ai_quiz", fake_ai)
+    save_quiz(placeholder_quiz(_mod()), str(tmp_path))
+    quiz = get_or_create_quiz(_mod(), str(tmp_path), use_ai=True, force=True)
+    assert calls["n"] == 1
+    assert quiz["source"] == "ai"
+    loaded = load_quiz("估值", str(tmp_path))
+    assert loaded["source"] == "ai"
