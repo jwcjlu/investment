@@ -1,11 +1,17 @@
 from __future__ import annotations
-import json
 from typing import List, Tuple
-from anthropic import Anthropic
 from engine.models import ChapterNote, BookSummary, OpinionEntry
+from engine.llm import make_client, create_structured
 import config
 
-_client = Anthropic()
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = make_client()
+    return _client
 
 _SUMMARY_SCHEMA = {
     "type": "object",
@@ -43,15 +49,12 @@ def synthesize(book_title: str, author: str,
 各章摘要：
 {_digest(notes)}
 """
-    resp = _client.messages.create(
-        model=config.MODEL,
+    data = create_structured(
+        _get_client(),
+        prompt=prompt,
+        schema=_SUMMARY_SCHEMA,
         max_tokens=config.MAX_TOKENS_SYNTHESIS,
-        thinking={"type": "adaptive"},
-        output_config={"format": {"type": "json_schema", "schema": _SUMMARY_SCHEMA}},
-        messages=[{"role": "user", "content": prompt}],
     )
-    text = next(b.text for b in resp.content if b.type == "text")
-    data = json.loads(text)
 
     summary = BookSummary(
         book_title=book_title,

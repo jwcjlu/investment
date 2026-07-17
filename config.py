@@ -13,10 +13,10 @@ PRICE_OUTPUT_PER_M = 25.0
 # 章节切分失败时的兜底：按字数硬切
 HARD_SPLIT_CHARS = 8000
 
-# 每章精读的输出上限（token）
-MAX_TOKENS_PER_CHAPTER = 8000
+# 每章精读的输出上限（token；含 adaptive thinking，需留足余量）
+MAX_TOKENS_PER_CHAPTER = 16000
 # 合成总览的输出上限（token）
-MAX_TOKENS_SYNTHESIS = 8000
+MAX_TOKENS_SYNTHESIS = 16000
 
 # 固定主题标签表（用户可增删；AI 只能从中选取）
 FIXED_TAGS = [

@@ -7,3 +7,4 @@ venv/
 .superpowers/
 curriculum/
 output/.cache/_last_llm_failure.txt
+docs/ebook/

@@ -48,7 +48,7 @@ def parse_txt(path: str) -> List[Chapter]:
 
 
 def parse_book(path: str) -> List[Chapter]:
-    """按扩展名分派解析器。EPUB/PDF 在后续任务补齐。"""
+    """按扩展名分派解析器：.txt / .epub / .pdf / .mobi。"""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".txt":
         return parse_txt(path)
@@ -58,4 +58,7 @@ def parse_book(path: str) -> List[Chapter]:
     if ext == ".pdf":
         from engine.parser_pdf import parse_pdf
         return parse_pdf(path)
+    if ext == ".mobi":
+        from engine.parser_mobi import parse_mobi
+        return parse_mobi(path)
     raise ValueError(f"不支持的文件类型：{ext}")

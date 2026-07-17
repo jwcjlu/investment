@@ -3,13 +3,14 @@ import os
 import sys
 import argparse
 from dotenv import load_dotenv
+
+load_dotenv()
+
 from notion_client import Client as NotionClient
 
 from engine.cache import load_chapter_note, _cache_dir  # 复用缓存
 from engine.synthesizer import synthesize
 from engine.notion_writer import write_overview_page, write_opinion_rows
-
-load_dotenv()
 
 
 def _load_all_notes(book: str):

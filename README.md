@@ -5,7 +5,9 @@
 ## 安装
 1. 安装依赖：`pip install -r requirements.txt`
 2. 复制 `.env.example` 为 `.env`，填入：
-   - `ANTHROPIC_API_KEY`
+   - `ANTHROPIC_API_KEY`（中转站或官方 key）
+   - `ANTHROPIC_BASE_URL`（中转站地址；走官方 API 可省略）
+   - `ANTHROPIC_MODEL`（可选，中转站模型名与官方不一致时再填）
    - `NOTION_TOKEN`（Notion 集成 token）
    - `NOTION_OVERVIEW_PARENT_PAGE_ID`（总览页面的父页面 ID，并把该页面共享给集成）
    - `NOTION_OPINIONS_DATABASE_ID`（观点数据库 ID，字段见下，并共享给集成）
@@ -24,6 +26,7 @@
 ## 使用
 ```bash
 python read_book.py "books/某本书.epub" --author "作者名"
+# 也支持 .pdf / .txt / .mobi（未加密）
 ```
 选项：
 - `--skip-notion`：只精读 + 本地备份，不写 Notion

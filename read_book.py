@@ -3,6 +3,9 @@ import os
 import sys
 import argparse
 from dotenv import load_dotenv
+
+load_dotenv()  # 须先于 LLM 客户端创建，以读取中转站等配置
+
 from notion_client import Client as NotionClient
 
 from engine.parser import parse_book
@@ -14,8 +17,6 @@ from engine.cache import (
 from engine.notion_writer import write_overview_page, write_opinion_rows
 from engine.cost import preflight
 import config
-
-load_dotenv()
 
 
 def book_name_from_path(path: str) -> str:
@@ -77,7 +78,7 @@ def _push(book, author, summary, notes, opinions):
 
 def main():
     ap = argparse.ArgumentParser(description="AI 精读投资书籍 → Notion")
-    ap.add_argument("path", help="电子书路径 (.epub/.pdf/.txt)")
+    ap.add_argument("path", help="电子书路径 (.epub/.pdf/.txt/.mobi)")
     ap.add_argument("--author", default="未知", help="作者名")
     ap.add_argument("--skip-notion", action="store_true", help="只精读+本地备份，不写 Notion")
     ap.add_argument("--yes", action="store_true", help="跳过成本确认")
