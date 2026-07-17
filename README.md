@@ -41,6 +41,22 @@ python push_to_notion.py "书名" --author "作者名"
 ## 自定义标签
 编辑 `config.py` 的 `FIXED_TAGS`。AI 只会从这个固定表里选主题标签。
 
+## 学习路径网站
+
+将精读缓存重组为按主题与难度排序的本地学习路径，在浏览器中浏览课表、模块导读与章节笔记。
+
+**前置条件**：至少用 `python read_book.py ...` 精读过一本书，并在 `output/.cache` 下产生缓存。修改缓存后需重启服务。
+
+```bash
+pip install -r requirements.txt
+python serve_course.py
+# 浏览器打开 http://127.0.0.1:8765
+
+python serve_course.py --sync-notion
+python serve_course.py --rebuild-intros
+python serve_course.py --no-ai-intro
+```
+
 ## 测试
 ```bash
 python -m pytest -v

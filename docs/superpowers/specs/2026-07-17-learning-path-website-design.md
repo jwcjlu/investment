@@ -1,7 +1,7 @@
 # 设计文档：投资理论知识学习路径网站（子项目 B）
 
 - 日期：2026-07-17
-- 状态：用户已确认；实现计划见 `docs/superpowers/plans/2026-07-17-learning-path-website.md`
+- 状态：已实现；用户已确认；实现计划见 `docs/superpowers/plans/2026-07-17-learning-path-website.md`
 - 作者：与用户协作 brainstorm 产出
 - 前置：`docs/superpowers/specs/2026-07-16-ai-reading-investment-books-design.md`（子项目 A）
 

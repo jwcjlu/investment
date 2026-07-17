@@ -1,0 +1,210 @@
+:root {
+  color-scheme: light;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --border: #e0e0e0;
+  --bg: #ffffff;
+  --accent: #1f6f43;
+  --accent-bg: #eef6f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.7;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin-top: 1.5rem;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+pre {
+  background: #f5f5f5;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+code {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.breadcrumb a {
+  color: var(--muted);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.empty-state {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 2rem;
+}
+
+.continue-banner {
+  background: var(--accent-bg);
+  border-radius: 8px;
+  padding: 0.9rem 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.continue-banner a {
+  font-weight: 600;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.module-card {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  color: var(--text);
+}
+
+.module-card:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.module-card h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+.module-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+
+.difficulty-badge,
+.actionability-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+}
+
+.lesson-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lesson-item {
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.lesson-item.is-completed a {
+  color: var(--muted);
+}
+
+.lesson-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.lesson h1 {
+  margin-bottom: 0.25rem;
+}
+
+blockquote {
+  border-left: 3px solid var(--border);
+  margin: 0.5rem 0;
+  padding: 0.25rem 1rem;
+  color: var(--muted);
+}
+
+.lesson-actions {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+button#complete-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button#complete-btn:hover {
+  opacity: 0.9;
+}
+
+.next-lesson {
+  font-weight: 600;
+}
+
+.chapter-expand {
+  margin-top: 1.5rem;
+}
+
+.chapter-expand ul {
+  padding-left: 1.2rem;
+}

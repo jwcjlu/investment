@@ -5,6 +5,6 @@ __pycache__/
 venv/
 .pytest_cache/
 .superpowers/
-curriculum/
+/curriculum/
 output/.cache/_last_llm_failure.txt
 docs/ebook/

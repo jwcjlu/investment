@@ -1,6 +1,8 @@
 # 投资理论知识学习路径网站 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **状态：已完成**（2026-07-17，经 subagent-driven-development 实现并合入 main）
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 用 FastAPI 本地网站，把子项目 A 的精读缓存（及可选 Notion）重组为「主题模块 + 难度序」课表，支持浏览观点课、展开章节笔记、落盘进度与缓存的 AI 模块导读。
 
@@ -63,7 +65,7 @@ D:\workspace\investment\
 - Create: `tests/test_lesson_id.py`
 - Modify: `.gitignore`
 
-- [ ] **Step 1: 更新 `.gitignore`**
+- [x] **Step 1: 更新 `.gitignore`**
 
 在文件末尾确保有：
 ```
@@ -71,7 +73,7 @@ D:\workspace\investment\
 curriculum/
 ```
 
-- [ ] **Step 2: 写失败测试 `tests/test_lesson_id.py`**
+- [x] **Step 2: 写失败测试 `tests/test_lesson_id.py`**
 
 ```python
 from engine.curriculum.lesson_id import make_lesson_id, encode_lesson_id, decode_lesson_id
@@ -106,12 +108,12 @@ def test_tag_roundtrip_with_slash():
     assert decode_tag(enc) == tag
 ```
 
-- [ ] **Step 3: 运行确认失败**
+- [x] **Step 3: 运行确认失败**
 
 Run: `python -m pytest tests/test_lesson_id.py -v`  
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 4: 实现**
+- [x] **Step 4: 实现**
 
 `engine/curriculum/__init__.py`: 空文件或导出说明。
 
@@ -228,12 +230,12 @@ class ProgressState:
         )
 ```
 
-- [ ] **Step 5: 运行测试通过**
+- [x] **Step 5: 运行测试通过**
 
 Run: `python -m pytest tests/test_lesson_id.py -v`  
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .gitignore engine/curriculum/__init__.py engine/curriculum/models.py engine/curriculum/lesson_id.py tests/test_lesson_id.py
@@ -248,7 +250,7 @@ git commit -m "feat(curriculum): add models and stable lesson ids"
 - Create: `engine/curriculum/assembler.py`
 - Create: `tests/test_assembler.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```python
 from engine.models import OpinionEntry
@@ -305,12 +307,12 @@ def test_multi_tag_appears_in_multiple_modules_same_id():
     assert id1 == id2 == make_lesson_id("A", "章", "跨标签")
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `python -m pytest tests/test_assembler.py -v`  
 Expected: FAIL
 
-- [ ] **Step 3: 实现 `engine/curriculum/assembler.py`**
+- [x] **Step 3: 实现 `engine/curriculum/assembler.py`**
 
 ```python
 from __future__ import annotations
@@ -361,7 +363,7 @@ def assemble_modules(items: List[CatalogItem]) -> List[Module]:
     return modules
 ```
 
-- [ ] **Step 4: 测试通过并 commit**
+- [x] **Step 4: 测试通过并 commit**
 
 Run: `python -m pytest tests/test_assembler.py tests/test_lesson_id.py -v`  
 Expected: PASS
@@ -379,7 +381,7 @@ git commit -m "feat(curriculum): assemble modules by tag and difficulty"
 - Create: `engine/curriculum/progress.py`
 - Create: `tests/test_progress.py`
 
-- [ ] **Step 1: 写失败测试（用 tmp_path）**
+- [x] **Step 1: 写失败测试（用 tmp_path）**
 
 ```python
 import json
@@ -409,18 +411,18 @@ def test_corrupt_file_backed_up_and_reset(tmp_path):
 
 （实现时 bak 路径定为 `progress.json.bak` 与原文件同目录。）
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `python -m pytest tests/test_progress.py -v`
 
-- [ ] **Step 3: 实现 `engine/curriculum/progress.py`**
+- [x] **Step 3: 实现 `engine/curriculum/progress.py`**
 
 - 默认路径：`curriculum/progress.json`
 - `load()`：不存在 → 空状态；JSON 坏 → 改名为 `progress.json.bak` 后返回空状态
 - `mark_complete(lesson_id)`：去重追加、更新 `last_lesson_id` 与 ISO `updated_at`、写盘
 - 提供模块级函数或 `ProgressStore` 类（测试与上一致即可）
 
-- [ ] **Step 4: 测试通过并 commit**
+- [x] **Step 4: 测试通过并 commit**
 
 ```bash
 git add engine/curriculum/progress.py tests/test_progress.py
@@ -437,7 +439,7 @@ git commit -m "feat(curriculum): persist learning progress to disk"
 - Create: `tests/fixtures/curriculum_cache/样例书/第1章.json`
 - Create: `tests/fixtures/curriculum_cache/坏书/第1章.json`（非法 JSON）
 
-- [ ] **Step 1: 写夹具**
+- [x] **Step 1: 写夹具**
 
 `tests/fixtures/curriculum_cache/样例书/第1章.json` — 合法 `ChapterNote.to_dict()`，含至少 1 条带标签 `估值` 的 opinion。
 
@@ -446,7 +448,7 @@ git commit -m "feat(curriculum): persist learning progress to disk"
 {not-json
 ```
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 ```python
 from pathlib import Path
@@ -471,7 +473,7 @@ def test_load_skips_corrupt_json():
     assert not any(i.book_title == "坏书" for i in items)
 ```
 
-- [ ] **Step 3: 实现 `load_catalog_from_cache(cache_root: str)`**
+- [x] **Step 3: 实现 `load_catalog_from_cache(cache_root: str)`**
 
 逻辑：
 1. `cache_root` 下每个子目录 = 书名（与 `engine.cache._cache_dir` 一致，目录名即书名）。
@@ -483,7 +485,7 @@ def test_load_skips_corrupt_json():
 
 复用已有模型，不要改 `engine/cache.py` 的写路径语义；可读其 `_safe` 若需要，但扫描时目录名已是落盘名。
 
-- [ ] **Step 4: 测试通过并 commit**
+- [x] **Step 4: 测试通过并 commit**
 
 ```bash
 git add engine/curriculum/loader.py tests/test_loader.py tests/fixtures/curriculum_cache
@@ -498,7 +500,7 @@ git commit -m "feat(curriculum): load opinions from local chapter cache"
 - Create: `engine/curriculum/intro_writer.py`
 - Create: `tests/test_intro_writer.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```python
 from engine.curriculum.models import Lesson, Module, ModuleIntro
@@ -542,7 +544,7 @@ def test_get_or_create_uses_cache_without_ai(tmp_path, monkeypatch):
     assert calls["n"] == 0
 ```
 
-- [ ] **Step 2: 实现**
+- [x] **Step 2: 实现**
 
 - `placeholder_intro(module)`：用标签名 + 课数 + 涉及书名列表拼短文。
 - `save_intro` / `load_intro`：`{intros_dir}/{safe_tag}.json`，`safe_tag = tag.replace("/", "_")`（仅文件名；**HTTP 路由用 `quote`，见 Task 7**）。
@@ -552,7 +554,7 @@ def test_get_or_create_uses_cache_without_ai(tmp_path, monkeypatch):
   - 若 use_ai：尝试 AI，成功则 `source=ai` 并保存
   - 否则/失败：占位并保存（失败时也可选择不覆盖已有；首次则写占位）
 
-- [ ] **Step 3: 测试通过并 commit**
+- [x] **Step 3: 测试通过并 commit**
 
 ```bash
 git add engine/curriculum/intro_writer.py tests/test_intro_writer.py
@@ -567,7 +569,7 @@ git commit -m "feat(curriculum): module intros with cache and AI fallback"
 - Create: `engine/curriculum/notion_sync.py`
 - Create: `tests/test_notion_sync.py`
 
-- [ ] **Step 1: 写失败测试（mock client）**
+- [x] **Step 1: 写失败测试（mock client）**
 
 测试 **`merge_catalog(local_items, remote_items) -> List[CatalogItem]`**（名称固定，勿另起 `merge_notion_opinions`）：
 - 本地已有相同「书名+章节+观点」→ 保留本地（含 chapter_index）
@@ -586,14 +588,14 @@ Notion 属性名与 A 一致。`rows_to_catalog_items` 需做 `build_opinion_pro
 - `multi_select` → `[x["name"] for x in ...]`
 - `select` → `properties["可执行度"]["select"]["name"]`（可为 None 时跳过该行或标「原则」）
 
-- [ ] **Step 2: 实现 `notion_sync.py`**
+- [x] **Step 2: 实现 `notion_sync.py`**
 
 - `fetch_notion_opinion_rows`：如上 `data_sources.query` 分页
 - `rows_to_catalog_items` → `CatalogItem`（chapter_index=None）
 - `merge_catalog(local, remote)` 按键去重
 - 提供 `sync_and_merge(local_items, client, db_id) -> List[CatalogItem]`；CLI 接入在 Task 7，且 **sync 异常由 CLI 捕获后降级**
 
-- [ ] **Step 3: 测试通过并 commit**
+- [x] **Step 3: 测试通过并 commit**
 
 ```bash
 git add engine/curriculum/notion_sync.py tests/test_notion_sync.py
@@ -614,7 +616,7 @@ git commit -m "feat(curriculum): merge Notion opinions into catalog"
 - Create: `tests/test_serve_course.py`
 - Modify: `requirements.txt`
 
-- [ ] **Step 1: 更新依赖**
+- [x] **Step 1: 更新依赖**
 
 `requirements.txt` 追加：
 ```
@@ -626,7 +628,7 @@ httpx>=0.27
 
 Run: `pip install fastapi uvicorn jinja2 httpx`
 
-- [ ] **Step 2: 写 HTTP 冒烟测试（用夹具 cache，禁 AI）**
+- [x] **Step 2: 写 HTTP 冒烟测试（用夹具 cache，禁 AI）**
 
 ```python
 from pathlib import Path
@@ -665,7 +667,7 @@ def test_empty_cache_friendly_message(tmp_path):
 
 另加：带 `tag` 的模块页 200；`POST /api/progress/complete` 后首页或 API 含该 id；若夹具含 `护城河/竞争优势` 类标签则用 **编码后的 tag** 访问模块页。
 
-- [ ] **Step 3: 实现 `create_app` + 路由**
+- [x] **Step 3: 实现 `create_app` + 路由**
 
 **Tag URL 规则（必做）：** `FIXED_TAGS` 含 `护城河/竞争优势`、`交易成本/税费`。路由使用编码 tag，与 lesson id 相同风格：
 - `encode_tag(tag) = urllib.parse.quote(tag, safe="")`
@@ -685,7 +687,7 @@ def test_empty_cache_friendly_message(tmp_path):
 
 模板：简洁中文排版；`base.html` 提供导航；CSS 白底深字、可读行宽即可（非营销页）。
 
-- [ ] **Step 4: CLI**
+- [x] **Step 4: CLI**
 
 `serve_course.py`：
 ```python
@@ -702,7 +704,7 @@ def test_empty_cache_friendly_message(tmp_path):
 - `--rebuild-intros`：对每个非空模块 `force=True` 重建导读；可与服务器同开（启动前重建）或单独跑完退出——实现选「启动前重建再 listen」即可
 - 默认：`uvicorn.run(app, host=..., port=...)`
 
-- [ ] **Step 5: 测试通过并 commit**
+- [x] **Step 5: 测试通过并 commit**
 
 ```bash
 git add serve_course.py templates static requirements.txt tests/test_serve_course.py
@@ -717,7 +719,7 @@ git commit -m "feat: add FastAPI learning path site"
 - Modify: `README.md`
 - Modify: `docs/superpowers/specs/2026-07-17-learning-path-website-design.md`（状态改为已实现计划就绪 / 实现中，可选）
 
-- [ ] **Step 1: README 增加「学习路径网站」一节**
+- [x] **Step 1: README 增加「学习路径网站」一节**
 
 说明：
 ```bash
@@ -732,7 +734,7 @@ python serve_course.py --no-ai-intro
 
 前置：至少一本 `python read_book.py ...` 产生的 `output/.cache`。
 
-- [ ] **Step 2: 本地手动冒烟（有真实缓存时）**
+- [x] **Step 2: 本地手动冒烟（有真实缓存时）**
 
 1. `python serve_course.py --no-ai-intro`
 2. 打开首页，看到多个主题模块
@@ -740,12 +742,12 @@ python serve_course.py --no-ai-intro
 4. 打开一课，展开章节笔记，标记已学，点下一课
 5. 重启服务，进度仍在
 
-- [ ] **Step 3: 跑全量测试**
+- [x] **Step 3: 跑全量测试**
 
 Run: `python -m pytest -v`  
 Expected: 全部 PASS（含既有 A 测试）
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md
@@ -766,7 +768,7 @@ git commit -m "docs: document learning path website usage"
 
 ## 完成定义
 
-- [ ] 上述 Task 1–8 完成，pytest 全绿
-- [ ] `python serve_course.py --no-ai-intro` 可在有缓存时浏览模块与观点课
-- [ ] 进度写入 `curriculum/progress.json` 且损坏可恢复
-- [ ] README 含启动说明
+- [x] 上述 Task 1–8 完成，pytest 全绿
+- [x] `python serve_course.py --no-ai-intro` 可在有缓存时浏览模块与观点课
+- [x] 进度写入 `curriculum/progress.json` 且损坏可恢复
+- [x] README 含启动说明

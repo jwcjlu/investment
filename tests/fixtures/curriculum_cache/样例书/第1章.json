@@ -1,0 +1,19 @@
+{
+  "chapter_index": 1,
+  "chapter_title": "第1章",
+  "core_points": ["点"],
+  "arguments": [],
+  "actionables": [],
+  "quotes": [],
+  "opinions": [
+    {
+      "opinion": "估值很重要",
+      "chapter": "第1章",
+      "tags": ["估值"],
+      "argument_summary": "论据",
+      "actionability": "原则",
+      "quote": "金句"
+    }
+  ],
+  "suggested_tags": []
+}

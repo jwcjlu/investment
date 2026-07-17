@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ tag }} · 投资学习路径{% endblock %}
+{% block content %}
+
+<nav class="breadcrumb"><a href="/">首页</a> / {{ tag }}</nav>
+<h1>{{ tag }}</h1>
+
+<section class="module-intro">
+  <h2>模块目标</h2>
+  <p>{{ intro.goals }}</p>
+  <h2>跨书对照</h2>
+  <p>{{ intro.cross_book }}</p>
+  <h2>学习顺序建议</h2>
+  <p>{{ intro.study_order_note }}</p>
+  {% if intro.source == "placeholder" %}
+    <p class="hint">（占位导读，未调用 AI 生成）</p>
+  {% endif %}
+</section>
+
+<h2>课表</h2>
+<ol class="lesson-list">
+  {% for lesson in lessons %}
+    <li class="lesson-item {% if lesson.completed %}is-completed{% endif %}">
+      <a href="/lesson/{{ lesson.encoded_id }}?tag={{ encoded_tag }}">
+        {% if lesson.completed %}✅{% endif %}
+        {{ lesson.opinion }}
+      </a>
+      <span class="lesson-meta">
+        《{{ lesson.book_title }}》{{ lesson.chapter }} ·
+        <span class="actionability-badge">{{ lesson.actionability }}</span>
+      </span>
+    </li>
+  {% endfor %}
+</ol>
+
+{% endblock %}
