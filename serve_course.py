@@ -15,6 +15,7 @@ import sys
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -37,6 +38,7 @@ from engine.curriculum.quiz_writer import get_or_create_quiz, grade, load_quiz
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+SPA_DIR = os.path.join(STATIC_DIR, "spa")
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
@@ -139,8 +141,15 @@ def create_app(
     curriculum_dir: str = "curriculum",
     enable_ai_intro: bool = True,
     catalog_items: Optional[List[CatalogItem]] = None,
+    serve_spa: Optional[bool] = None,
 ) -> FastAPI:
-    """构建并初始化 FastAPI 应用：启动时一次性加载课表到 app.state。"""
+    """构建并初始化 FastAPI 应用：启动时一次性加载课表到 app.state。
+
+    serve_spa:
+      None  — 若 static/spa/index.html 存在则托管 SPA，否则用 Jinja 页面
+      True  — 强制 SPA（缺构建产物则 503）
+      False — 强制 Jinja（测试用）
+    """
     local_items, notes_index, warnings = load_catalog_from_cache(cache_root)
     items = catalog_items if catalog_items is not None else local_items
     modules = assemble_modules(items)
@@ -149,6 +158,12 @@ def create_app(
     quizzes_dir = os.path.join(curriculum_dir, "quizzes")
     progress_path = os.path.join(curriculum_dir, "progress.json")
     daily_path = os.path.join(curriculum_dir, "daily.json")
+
+    spa_index = os.path.join(SPA_DIR, "index.html")
+    if serve_spa is None:
+        use_spa = os.path.isfile(spa_index)
+    else:
+        use_spa = serve_spa
 
     app = FastAPI(title="投资学习路径")
     app.state.modules = modules
@@ -159,109 +174,114 @@ def create_app(
     app.state.quizzes_dir = quizzes_dir
     app.state.daily_path = daily_path
     app.state.enable_ai_intro = enable_ai_intro
+    app.state.use_spa = use_spa
 
     if os.path.isdir(STATIC_DIR):
         app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-    @app.get("/")
-    def index(request: Request):
-        modules = app.state.modules
-        progress = app.state.progress_store.load()
-        completed = set(progress.completed)
+    if not use_spa:
 
-        module_cards = _build_module_cards(modules, completed)
-        continue_lesson = _build_continue_lesson(modules, progress)
+        @app.get("/")
+        def index(request: Request):
+            modules = app.state.modules
+            progress = app.state.progress_store.load()
+            completed = set(progress.completed)
 
-        return templates.TemplateResponse(
-            request,
-            "index.html",
-            {
-                "has_modules": len(modules) > 0,
-                "modules": module_cards,
-                "completed_count": len(completed),
-                "continue_lesson": continue_lesson,
-            },
-        )
+            module_cards = _build_module_cards(modules, completed)
+            continue_lesson = _build_continue_lesson(modules, progress)
 
-    # `:path` (not the default str converter, which excludes '/') is required because
-    # ASGI servers decode %2F to '/' before route matching, and tags like
-    # "护城河/竞争优势" produce an encoded_tag containing '/'.
-    @app.get("/module/{encoded_tag:path}")
-    def module_page(encoded_tag: str, request: Request):
-        tag = decode_tag(encoded_tag)
-        module = next((m for m in app.state.modules if m.tag == tag), None)
-        if module is None:
-            raise HTTPException(status_code=404, detail="模块不存在")
-
-        intro = get_or_create_intro(
-            module, app.state.intros_dir, use_ai=app.state.enable_ai_intro
-        )
-        progress = app.state.progress_store.load()
-        completed = set(progress.completed)
-
-        lessons = [_lesson_brief(lesson, completed) for lesson in module.lessons]
-
-        return templates.TemplateResponse(
-            request,
-            "module.html",
-            {
-                "tag": tag,
-                "encoded_tag": encoded_tag,
-                "intro": intro,
-                "lessons": lessons,
-            },
-        )
-
-    @app.get("/lesson/{encoded_id}")
-    def lesson_page(
-        encoded_id: str,
-        request: Request,
-        tag: str,
-        expand: Optional[str] = None,
-    ):
-        lesson_id = decode_lesson_id(encoded_id)
-        module_tag = decode_tag(tag)
-        module = next((m for m in app.state.modules if m.tag == module_tag), None)
-        if module is None:
-            raise HTTPException(status_code=404, detail="模块不存在")
-
-        idx = next(
-            (i for i, l in enumerate(module.lessons) if l.lesson_id == lesson_id),
-            None,
-        )
-        if idx is None:
-            raise HTTPException(status_code=404, detail="课程不存在")
-
-        lesson = module.lessons[idx]
-        next_lesson = module.lessons[idx + 1] if idx + 1 < len(module.lessons) else None
-
-        chapter_note = None
-        expanded = bool(expand) and expand != "0"
-        if expanded:
-            chapter_note = app.state.notes_index.get(
-                (lesson.book_title, lesson.chapter_index)
+            return templates.TemplateResponse(
+                request,
+                "index.html",
+                {
+                    "has_modules": len(modules) > 0,
+                    "modules": module_cards,
+                    "completed_count": len(completed),
+                    "continue_lesson": continue_lesson,
+                },
             )
 
-        progress = app.state.progress_store.load()
-        completed = lesson.lesson_id in progress.completed
+        # `:path` (not the default str converter, which excludes '/') is required because
+        # ASGI servers decode %2F to '/' before route matching, and tags like
+        # "护城河/竞争优势" produce an encoded_tag containing '/'.
+        @app.get("/module/{encoded_tag:path}")
+        def module_page(encoded_tag: str, request: Request):
+            tag = decode_tag(encoded_tag)
+            module = next((m for m in app.state.modules if m.tag == tag), None)
+            if module is None:
+                raise HTTPException(status_code=404, detail="模块不存在")
 
-        return templates.TemplateResponse(
-            request,
-            "lesson.html",
-            {
-                "lesson": lesson,
-                "tag": module_tag,
-                "encoded_tag": tag,
-                "encoded_id": encoded_id,
-                "expanded": expanded,
-                "chapter_note": chapter_note,
-                "next_lesson": next_lesson,
-                "next_encoded_id": encode_lesson_id(next_lesson.lesson_id)
-                if next_lesson
-                else None,
-                "completed": completed,
-            },
-        )
+            intro = get_or_create_intro(
+                module, app.state.intros_dir, use_ai=app.state.enable_ai_intro
+            )
+            progress = app.state.progress_store.load()
+            completed = set(progress.completed)
+
+            lessons = [_lesson_brief(lesson, completed) for lesson in module.lessons]
+
+            return templates.TemplateResponse(
+                request,
+                "module.html",
+                {
+                    "tag": tag,
+                    "encoded_tag": encoded_tag,
+                    "intro": intro,
+                    "lessons": lessons,
+                },
+            )
+
+        @app.get("/lesson/{encoded_id}")
+        def lesson_page(
+            encoded_id: str,
+            request: Request,
+            tag: str,
+            expand: Optional[str] = None,
+        ):
+            lesson_id = decode_lesson_id(encoded_id)
+            module_tag = decode_tag(tag)
+            module = next((m for m in app.state.modules if m.tag == module_tag), None)
+            if module is None:
+                raise HTTPException(status_code=404, detail="模块不存在")
+
+            idx = next(
+                (i for i, l in enumerate(module.lessons) if l.lesson_id == lesson_id),
+                None,
+            )
+            if idx is None:
+                raise HTTPException(status_code=404, detail="课程不存在")
+
+            lesson = module.lessons[idx]
+            next_lesson = (
+                module.lessons[idx + 1] if idx + 1 < len(module.lessons) else None
+            )
+
+            chapter_note = None
+            expanded = bool(expand) and expand != "0"
+            if expanded:
+                chapter_note = app.state.notes_index.get(
+                    (lesson.book_title, lesson.chapter_index)
+                )
+
+            progress = app.state.progress_store.load()
+            completed = lesson.lesson_id in progress.completed
+
+            return templates.TemplateResponse(
+                request,
+                "lesson.html",
+                {
+                    "lesson": lesson,
+                    "tag": module_tag,
+                    "encoded_tag": tag,
+                    "encoded_id": encoded_id,
+                    "expanded": expanded,
+                    "chapter_note": chapter_note,
+                    "next_lesson": next_lesson,
+                    "next_encoded_id": encode_lesson_id(next_lesson.lesson_id)
+                    if next_lesson
+                    else None,
+                    "completed": completed,
+                },
+            )
 
     @app.post("/api/progress/complete")
     def complete_lesson(payload: CompleteRequest):
@@ -415,6 +435,37 @@ def create_app(
         if quiz is None:
             raise HTTPException(status_code=404, detail="题库不存在，请先获取测验")
         return grade(quiz, payload.answers)
+
+    if use_spa:
+        spa_assets = os.path.join(SPA_DIR, "assets")
+        if os.path.isdir(spa_assets):
+            app.mount(
+                "/assets",
+                StaticFiles(directory=spa_assets),
+                name="spa-assets",
+            )
+
+        @app.get("/")
+        def spa_root():
+            if not os.path.isfile(spa_index):
+                raise HTTPException(
+                    status_code=503,
+                    detail="SPA 未构建：请先执行 cd web && npm run build",
+                )
+            return FileResponse(spa_index)
+
+        @app.get("/{full_path:path}")
+        def spa_fallback(full_path: str):
+            if not os.path.isfile(spa_index):
+                raise HTTPException(
+                    status_code=503,
+                    detail="SPA 未构建：请先执行 cd web && npm run build",
+                )
+            # 已注册的 /api、/static、/assets 优先；其余交给 SPA history fallback
+            candidate = os.path.normpath(os.path.join(SPA_DIR, full_path))
+            if candidate.startswith(SPA_DIR) and os.path.isfile(candidate):
+                return FileResponse(candidate)
+            return FileResponse(spa_index)
 
     return app
 

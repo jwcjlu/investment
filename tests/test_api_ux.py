@@ -10,6 +10,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "curriculum_cache"
 
 
 def _client(tmp_path, **kwargs) -> TestClient:
+    kwargs.setdefault("serve_spa", False)
     app = create_app(
         cache_root=str(FIXTURE),
         curriculum_dir=str(tmp_path / "curriculum"),
@@ -220,6 +221,7 @@ def test_api_quiz_force_rebuilds_with_ai(tmp_path, monkeypatch):
         cache_root=str(FIXTURE),
         curriculum_dir=str(curriculum_dir),
         enable_ai_intro=True,
+        serve_spa=False,
     )
     client = TestClient(app)
 
