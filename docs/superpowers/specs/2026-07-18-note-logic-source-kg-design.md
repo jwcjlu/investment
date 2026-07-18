@@ -1,7 +1,7 @@
 # 设计文档：笔记逻辑结构 · 原文索引 · 全局知识图谱
 
 - 日期：2026-07-18
-- 状态：待用户确认书面 spec
+- 状态：spec 复核已通过；待用户确认后进入实现计划
 - 作者：与用户协作 brainstorm 产出
 - 前置：
   - `docs/superpowers/specs/2026-07-16-ai-reading-investment-books-design.md`（精读引擎）
@@ -108,7 +108,7 @@ NoteAtom {
 }
 ```
 
-`OpinionEntry` 增加 `sources: [SourceRef]`（金句/原则各自的支撑原文）；`quote` 字符串字段保留，其定位写入 `sources`。
+`OpinionEntry` 增加 `sources: [SourceRef]`：**挂在原则（opinion）上的证据**；`quote` 字符串字段保留。若金句需独立「原文」入口，其摘录作为 `sources` 中的一条（`excerpt` 对齐金句文本），与原则共用同一数组（MVP 不拆两个字段）。
 
 **读取兼容（强制）：** `normalize_*` 若遇到纯字符串，转为 `{ text: s, sources: [] }`。旧缓存无「原文」按钮，但不崩溃。  
 **写入：** 新精读一律写对象形。Notion 同步可继续只推 `text`/摘要字段，完整 `sources` 以本地缓存为准（本轮不要求 Notion 存偏移）。
@@ -137,9 +137,9 @@ LogicStructure {
 当 AI 失败或 `enable_ai=false`：
 
 - `source: "placeholder"`  
-- `layers`：L1 = 课时原则（单节点）；L2 = 最多 5 条 `core_points` 文本各成节点；L3 可空  
+- `layers`：L1 = 课时原则（单节点，`sources` 拷贝自 `OpinionEntry.sources`）；L2 = 最多 5 条 `core_points` 各成节点；L3 可空  
 - `edges`: `[]`（占位不编造因果）  
-- 每个 placeholder 节点：`ungrounded: true`，`sources: []`（若对应 NoteAtom 已有 sources 则拷贝并设 `ungrounded: false`）  
+- 节点：`sources` 非空则 `ungrounded: false`，否则 `ungrounded: true`  
 - UI：展示分层，隐藏空关系图或显示「暂无关系图」
 
 ### 全局知识图谱
@@ -170,7 +170,8 @@ KGEdge {
 2. 规范化：NFKC、去首尾空白、合并连续空白、Unicode 小写（适用时）。  
 3. `node_id = "n_" + sha1(normalized)[:12]`（稳定、与书无关）。  
 4. AI **只输出 label/kind/aliases/rel**，不自造 `node_id`；由后处理按上式计算。  
-5. 合并：相同 `node_id` 合并 `sources`/`aliases`；人工拆分通过别名表把错误合并的 label 映射到不同规范名（本轮不做 UI 编辑器）。
+5. 合并：相同 `node_id` 合并 `sources`/`aliases`；人工拆分通过别名表把错误合并的 label 映射到不同规范名（本轮不做 UI 编辑器）。  
+6. `edge_id = "e_" + sha1(from + "|" + rel + "|" + to)[:12]`（与方向、关系类型相关，便于 M2 合并去重）。
 
 消歧（MVP）：上式 + 别名表；不做重型实体链接。
 
