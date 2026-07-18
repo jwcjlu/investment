@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
-from engine.models import Chapter, ChapterNote, NoteAtom, OpinionEntry
+from engine.models import Chapter, ChapterNote, NoteAtom, OpinionEntry, SourceRef
 from engine.llm import make_client, create_structured
 from engine.notion_writer import sanitize_tags
+from engine.source_locate import locate_excerpt
 import config
 
 _client = None
@@ -183,7 +184,52 @@ def _build_prompt(chapter: Chapter) -> str:
 """
 
 
-def read_chapter(chapter: Chapter) -> ChapterNote:
+def _ref_for_excerpt(
+    book_title: str, chapter_index: int, excerpt: str, chapter_text: str
+) -> Optional[SourceRef]:
+    excerpt = (excerpt or "").strip()
+    if not excerpt:
+        return None
+    start, end = locate_excerpt(chapter_text, excerpt)
+    return SourceRef(
+        book_title=book_title,
+        chapter_index=chapter_index,
+        excerpt=excerpt,
+        char_start=start,
+        char_end=end,
+    )
+
+
+def attach_source_refs(
+    note: ChapterNote, chapter: Chapter, *, book_title: str
+) -> ChapterNote:
+    """启发式：用 quote / 要点文本作 excerpt，并在章内定位偏移。"""
+    text = chapter.text or ""
+
+    def fill_atom(atom: NoteAtom) -> NoteAtom:
+        if atom.sources or not atom.text:
+            return atom
+        ref = _ref_for_excerpt(book_title, note.chapter_index, atom.text, text)
+        if ref is None:
+            return atom
+        return NoteAtom(text=atom.text, sources=[ref])
+
+    note.core_points = [fill_atom(a) for a in note.core_points]
+    note.arguments = [fill_atom(a) for a in note.arguments]
+    note.actionables = [fill_atom(a) for a in note.actionables]
+    note.quotes = [fill_atom(a) for a in note.quotes]
+
+    for op in note.opinions:
+        if op.sources:
+            continue
+        excerpt = (op.quote or op.argument_summary or op.opinion or "").strip()
+        ref = _ref_for_excerpt(book_title, note.chapter_index, excerpt, text)
+        if ref is not None:
+            op.sources = [ref]
+    return note
+
+
+def read_chapter(chapter: Chapter, book_title: str = "") -> ChapterNote:
     data = create_structured(
         _get_client(),
         prompt=_build_prompt(chapter),
@@ -203,7 +249,7 @@ def read_chapter(chapter: Chapter) -> ChapterNote:
         )
         for o in data["opinions"]
     ]
-    return ChapterNote(
+    note = ChapterNote(
         chapter_index=chapter.index,
         chapter_title=chapter.title,
         core_points=[NoteAtom.from_any(x) for x in data["core_points"]],
@@ -213,3 +259,6 @@ def read_chapter(chapter: Chapter) -> ChapterNote:
         opinions=opinions,
         suggested_tags=data.get("suggested_tags", []),
     )
+    if book_title:
+        attach_source_refs(note, chapter, book_title=book_title)
+    return note

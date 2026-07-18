@@ -31,6 +31,29 @@ def save_chapter_note(book: str, note: ChapterNote, base: str = _DEFAULT_BASE) -
         json.dump(note.to_dict(), f, ensure_ascii=False, indent=2)
 
 
+def _chapter_text_path(book: str, index: int, base: str) -> str:
+    return os.path.join(_cache_dir(book, base), "_chapters", f"{index}.txt")
+
+
+def save_chapter_text(
+    book: str, index: int, text: str, base: str = _DEFAULT_BASE
+) -> None:
+    path = _chapter_text_path(book, index, base)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text or "")
+
+
+def load_chapter_text(
+    book: str, index: int, base: str = _DEFAULT_BASE
+) -> Optional[str]:
+    path = _chapter_text_path(book, index, base)
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 def load_chapter_note(book: str, index: int, base: str = _DEFAULT_BASE) -> Optional[ChapterNote]:
     p = _note_path(book, index, base)
     if not os.path.exists(p):
