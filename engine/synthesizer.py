@@ -30,8 +30,8 @@ def _digest(notes: List[ChapterNote]) -> str:
     parts = []
     for n in sorted(notes, key=lambda x: x.chapter_index):
         parts.append(f"【{n.chapter_title}】")
-        parts.append("核心观点：" + "；".join(n.core_points))
-        parts.append("可执行要点：" + "；".join(n.actionables))
+        parts.append("核心观点：" + "；".join(x.text for x in n.core_points))
+        parts.append("可执行要点：" + "；".join(x.text for x in n.actionables))
     return "\n".join(parts)
 
 

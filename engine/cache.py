@@ -54,13 +54,13 @@ def write_markdown(book: str, summary: BookSummary, notes: List[ChapterNote],
     for note in sorted(notes, key=lambda n: n.chapter_index):
         lines.append(f"\n### {note.chapter_title}")
         lines.append("**核心观点：**")
-        lines += [f"- {x}" for x in note.core_points]
+        lines += [f"- {x.text}" for x in note.core_points]
         lines.append("**论据：**")
-        lines += [f"- {x}" for x in note.arguments]
+        lines += [f"- {x.text}" for x in note.arguments]
         lines.append("**可执行要点：**")
-        lines += [f"- {x}" for x in note.actionables]
+        lines += [f"- {x.text}" for x in note.actionables]
         lines.append("**金句：**")
-        lines += [f"> {x}" for x in note.quotes]
+        lines += [f"> {x.text}" for x in note.quotes]
         if note.opinions:
             lines.append("**观点条目：**")
             for o in note.opinions:

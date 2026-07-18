@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
-from engine.models import Chapter, ChapterNote, OpinionEntry
+from engine.models import Chapter, ChapterNote, NoteAtom, OpinionEntry
 from engine.llm import make_client, create_structured
 from engine.notion_writer import sanitize_tags
 import config
@@ -206,10 +206,10 @@ def read_chapter(chapter: Chapter) -> ChapterNote:
     return ChapterNote(
         chapter_index=chapter.index,
         chapter_title=chapter.title,
-        core_points=data["core_points"],
-        arguments=data["arguments"],
-        actionables=data["actionables"],
-        quotes=data["quotes"],
+        core_points=[NoteAtom.from_any(x) for x in data["core_points"]],
+        arguments=[NoteAtom.from_any(x) for x in data["arguments"]],
+        actionables=[NoteAtom.from_any(x) for x in data["actionables"]],
+        quotes=[NoteAtom.from_any(x) for x in data["quotes"]],
         opinions=opinions,
         suggested_tags=data.get("suggested_tags", []),
     )
