@@ -54,6 +54,17 @@ def load_chapter_text(
         return f.read()
 
 
+def load_chapter_text_from_cache_root(
+    cache_root: str, book: str, index: int
+) -> Optional[str]:
+    """cache_root 与 load_catalog_from_cache 相同（即 output/.cache）。"""
+    path = os.path.join(cache_root, _safe(book), "_chapters", f"{index}.txt")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 def load_chapter_note(book: str, index: int, base: str = _DEFAULT_BASE) -> Optional[ChapterNote]:
     p = _note_path(book, index, base)
     if not os.path.exists(p):

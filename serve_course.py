@@ -34,6 +34,9 @@ from engine.curriculum.loader import load_catalog_from_cache
 from engine.curriculum.models import CatalogItem, Lesson, Module, ProgressState
 from engine.curriculum.progress import ProgressStore
 from engine.curriculum.quiz_writer import get_or_create_quiz, grade, load_quiz
+from engine.curriculum.logic_writer import get_or_create_logic
+from engine.cache import load_chapter_text_from_cache_root
+from engine.source_locate import locate_excerpt, slice_window
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -156,6 +159,7 @@ def create_app(
 
     intros_dir = os.path.join(curriculum_dir, "intros")
     quizzes_dir = os.path.join(curriculum_dir, "quizzes")
+    logic_dir = os.path.join(curriculum_dir, "logic")
     progress_path = os.path.join(curriculum_dir, "progress.json")
     daily_path = os.path.join(curriculum_dir, "daily.json")
 
@@ -172,6 +176,8 @@ def create_app(
     app.state.progress_store = ProgressStore(progress_path)
     app.state.intros_dir = intros_dir
     app.state.quizzes_dir = quizzes_dir
+    app.state.logic_dir = logic_dir
+    app.state.cache_root = cache_root
     app.state.daily_path = daily_path
     app.state.enable_ai_intro = enable_ai_intro
     app.state.use_spa = use_spa
@@ -366,16 +372,104 @@ def create_app(
             "encoded_tag": encode_tag(module_tag),
             "book_title": lesson.book_title,
             "chapter": lesson.chapter,
+            "chapter_index": lesson.chapter_index,
             "opinion": lesson.opinion,
             "argument_summary": lesson.argument_summary,
             "actionability": lesson.actionability,
             "quote": lesson.quote,
+            "sources": [s.to_dict() for s in (lesson.sources or [])],
             "completed": completed,
             "chapter_note": chapter_note,
             "next_lesson_id": next_lesson.lesson_id if next_lesson else None,
             "next_encoded_id": encode_lesson_id(next_lesson.lesson_id)
             if next_lesson
             else None,
+        }
+
+    @app.get("/api/lessons/{encoded_id}/logic")
+    def api_lesson_logic(
+        encoded_id: str,
+        tag: str,
+        force: bool = False,
+    ):
+        lesson_id = decode_lesson_id(encoded_id)
+        module_tag = decode_tag(tag)
+        module = next((m for m in app.state.modules if m.tag == module_tag), None)
+        if module is None:
+            raise HTTPException(status_code=404, detail="模块不存在")
+        lesson = next((l for l in module.lessons if l.lesson_id == lesson_id), None)
+        if lesson is None:
+            raise HTTPException(status_code=404, detail="课程不存在")
+        note = None
+        if lesson.chapter_index is not None:
+            note = app.state.notes_index.get((lesson.book_title, lesson.chapter_index))
+        logic = get_or_create_logic(
+            lesson,
+            app.state.logic_dir,
+            note=note,
+            use_ai=app.state.enable_ai_intro,
+            force=force,
+        )
+        return logic.to_dict()
+
+    @app.get("/api/source")
+    def api_source(
+        book: str,
+        chapter: int,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        excerpt: Optional[str] = None,
+    ):
+        note = app.state.notes_index.get((book, chapter))
+        chapter_title = note.chapter_title if note else f"第{chapter}章"
+        chapter_text = load_chapter_text_from_cache_root(
+            app.state.cache_root, book, chapter
+        )
+        degraded = False
+        highlight = None
+        text = ""
+
+        if not chapter_text:
+            degraded = True
+            text = (excerpt or "")[:4000]
+            return {
+                "book_title": book,
+                "chapter_index": chapter,
+                "chapter_title": chapter_title,
+                "text": text,
+                "highlight": None,
+                "excerpt": excerpt,
+                "degraded": True,
+            }
+
+        char_start, char_end = start, end
+        if char_start is None or char_end is None:
+            if excerpt:
+                char_start, char_end = locate_excerpt(chapter_text, excerpt)
+            if char_start is None:
+                degraded = True
+
+        text, highlight = slice_window(
+            chapter_text,
+            char_start,
+            char_end,
+            excerpt=excerpt,
+            pad=800,
+            hard_max=4000,
+        )
+        if highlight is None and excerpt:
+            degraded = True
+
+        return {
+            "book_title": book,
+            "chapter_index": chapter,
+            "chapter_title": chapter_title,
+            "text": text,
+            "highlight": {"start": highlight[0], "end": highlight[1]}
+            if highlight
+            else None,
+            "excerpt": excerpt,
+            "degraded": degraded,
         }
 
     @app.get("/api/daily")
