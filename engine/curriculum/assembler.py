@@ -19,6 +19,7 @@ def _to_lesson(item: CatalogItem) -> Lesson:
         actionability=op.actionability,
         quote=op.quote,
         tags=list(op.tags),
+        sources=list(op.sources or []),
     )
 
 

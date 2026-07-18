@@ -36,6 +36,9 @@ FIXED_TAGS = [
     "投资纪律",
 ]
 
+# 每日软配额：默认原则课条数
+DAILY_LESSON_LIMIT = 5
+
 # 可执行度取值
 ACTIONABILITY_VALUES = ["原则", "可直接执行", "需自己判断"]
 

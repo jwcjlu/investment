@@ -12,7 +12,11 @@ from engine.parser import parse_book
 from engine.reader import read_chapter
 from engine.synthesizer import synthesize
 from engine.cache import (
-    has_chapter_note, save_chapter_note, load_chapter_note, write_markdown,
+    has_chapter_note,
+    save_chapter_note,
+    save_chapter_text,
+    load_chapter_note,
+    write_markdown,
 )
 from engine.notion_writer import write_overview_page, write_opinion_rows
 from engine.cost import preflight
@@ -46,8 +50,9 @@ def run(path: str, author: str, skip_notion: bool = False, yes: bool = False):
             print(f"      第 {ch.index}/{len(chapters)} 章 (缓存命中) ✓")
             notes.append(load_chapter_note(book, ch.index))
             continue
-        note = read_chapter(ch)
+        note = read_chapter(ch, book_title=book)
         save_chapter_note(book, note)       # 边读边落地，支持断点续跑
+        save_chapter_text(book, ch.index, ch.text)
         notes.append(note)
         print(f"      第 {ch.index}/{len(chapters)} 章 ✓")
 

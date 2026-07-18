@@ -13,6 +13,7 @@ def test_index_ok_with_fixture_cache(tmp_path):
         cache_root=str(FIXTURE),
         curriculum_dir=str(tmp_path / "curriculum"),
         enable_ai_intro=False,
+        serve_spa=False,
     )
     r = TestClient(app).get("/")
     assert r.status_code == 200
@@ -26,6 +27,7 @@ def test_empty_cache_friendly_message(tmp_path):
         cache_root=str(empty),
         curriculum_dir=str(tmp_path / "cur"),
         enable_ai_intro=False,
+        serve_spa=False,
     )
     r = TestClient(app).get("/")
     assert r.status_code == 200
@@ -37,6 +39,7 @@ def test_module_page_ok_with_encoded_tag(tmp_path):
         cache_root=str(FIXTURE),
         curriculum_dir=str(tmp_path / "curriculum"),
         enable_ai_intro=False,
+        serve_spa=False,
     )
     r = TestClient(app).get(f"/module/{encode_tag('估值')}")
     assert r.status_code == 200
@@ -51,6 +54,7 @@ def test_module_page_ok_with_slash_in_tag(tmp_path):
         cache_root=str(FIXTURE),
         curriculum_dir=str(tmp_path / "curriculum"),
         enable_ai_intro=False,
+        serve_spa=False,
     )
     tag = "护城河/竞争优势"
     r = TestClient(app).get(f"/module/{encode_tag(tag)}")
@@ -63,6 +67,7 @@ def test_homepage_links_to_slash_tag_module(tmp_path):
         cache_root=str(FIXTURE),
         curriculum_dir=str(tmp_path / "curriculum"),
         enable_ai_intro=False,
+        serve_spa=False,
     )
     client = TestClient(app)
     tag = "护城河/竞争优势"
@@ -80,6 +85,7 @@ def test_lesson_page_ok_and_progress_roundtrip(tmp_path):
         cache_root=str(FIXTURE),
         curriculum_dir=str(tmp_path / "curriculum"),
         enable_ai_intro=False,
+        serve_spa=False,
     )
     client = TestClient(app)
 

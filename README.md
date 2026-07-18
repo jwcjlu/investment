@@ -43,17 +43,38 @@ python push_to_notion.py "书名" --author "作者名"
 
 ## 学习路径网站
 
-将精读缓存重组为按主题与难度排序的本地学习路径，在浏览器中浏览课表、模块导读与章节笔记。
+将精读缓存重组为按主题与难度排序的本地学习路径（React SPA + FastAPI JSON API）：模块导读优先、折叠课时、AI 测验、每日软配额；课时页展示**逻辑分层 + 关系子图**，笔记旁可开**原文侧栏**（需精读时写入的 SourceRef / 章文本缓存；旧缓存无索引则不显示「原文」按钮）。
 
 **前置条件**：至少用 `python read_book.py ...` 精读过一本书，并在 `output/.cache` 下产生缓存。修改缓存后需重启服务。
 
+### 开发（前后端分离）
+
 ```bash
 pip install -r requirements.txt
-python serve_course.py
-# 浏览器打开 http://127.0.0.1:8765
+python serve_course.py --no-ai-intro --cache-root output/.cache
+# API: http://127.0.0.1:8765/api/...
 
+cd web && npm install && npm run dev
+# SPA 开发服务器（代理 /api → :8765）
+```
+
+### 生产式单进程（SPA 由 FastAPI 托管）
+
+先构建前端到 `static/spa/`，再启动服务；若该目录存在 `index.html`，则优先托管 SPA（Jinja 页面关闭），`/api` 与原有 `/static` 不受影响。
+
+```bash
+cd web && npm install && npm run build
+cd ..
+python serve_course.py --no-ai-intro
+# 浏览器打开 http://127.0.0.1:8765
+```
+
+其它 CLI：
+
+```bash
 python serve_course.py --sync-notion
 python serve_course.py --rebuild-intros
+python serve_course.py --rebuild-quizzes
 python serve_course.py --no-ai-intro
 ```
 

@@ -7,3 +7,6 @@ venv/
 .superpowers/
 /curriculum/
 output/.cache/_last_llm_failure.txt
+web/node_modules/
+web/dist/
+static/spa/

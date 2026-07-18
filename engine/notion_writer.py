@@ -166,11 +166,11 @@ def build_overview_blocks(summary: BookSummary, notes: List[ChapterNote]) -> Lis
     for n in sorted(notes, key=lambda x: x.chapter_index):
         blocks.append(_heading(n.chapter_title))
         for x in n.core_points:
-            blocks.append(_bullet(f"核心：{x}"))
+            blocks.append(_bullet(f"核心：{x.text}"))
         for x in n.actionables:
-            blocks.append(_bullet(f"可执行：{x}"))
+            blocks.append(_bullet(f"可执行：{x.text}"))
         for x in n.quotes:
-            blocks.append(_bullet(f"金句：{x}"))
+            blocks.append(_bullet(f"金句：{x.text}"))
     blocks.append(_heading("我的疑问 & 待验证点"))
     blocks += [_bullet(q) for q in summary.open_questions]
     return blocks

@@ -31,6 +31,40 @@ def save_chapter_note(book: str, note: ChapterNote, base: str = _DEFAULT_BASE) -
         json.dump(note.to_dict(), f, ensure_ascii=False, indent=2)
 
 
+def _chapter_text_path(book: str, index: int, base: str) -> str:
+    return os.path.join(_cache_dir(book, base), "_chapters", f"{index}.txt")
+
+
+def save_chapter_text(
+    book: str, index: int, text: str, base: str = _DEFAULT_BASE
+) -> None:
+    path = _chapter_text_path(book, index, base)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text or "")
+
+
+def load_chapter_text(
+    book: str, index: int, base: str = _DEFAULT_BASE
+) -> Optional[str]:
+    path = _chapter_text_path(book, index, base)
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
+def load_chapter_text_from_cache_root(
+    cache_root: str, book: str, index: int
+) -> Optional[str]:
+    """cache_root 与 load_catalog_from_cache 相同（即 output/.cache）。"""
+    path = os.path.join(cache_root, _safe(book), "_chapters", f"{index}.txt")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 def load_chapter_note(book: str, index: int, base: str = _DEFAULT_BASE) -> Optional[ChapterNote]:
     p = _note_path(book, index, base)
     if not os.path.exists(p):
@@ -54,13 +88,13 @@ def write_markdown(book: str, summary: BookSummary, notes: List[ChapterNote],
     for note in sorted(notes, key=lambda n: n.chapter_index):
         lines.append(f"\n### {note.chapter_title}")
         lines.append("**核心观点：**")
-        lines += [f"- {x}" for x in note.core_points]
+        lines += [f"- {x.text}" for x in note.core_points]
         lines.append("**论据：**")
-        lines += [f"- {x}" for x in note.arguments]
+        lines += [f"- {x.text}" for x in note.arguments]
         lines.append("**可执行要点：**")
-        lines += [f"- {x}" for x in note.actionables]
+        lines += [f"- {x.text}" for x in note.actionables]
         lines.append("**金句：**")
-        lines += [f"> {x}" for x in note.quotes]
+        lines += [f"> {x.text}" for x in note.quotes]
         if note.opinions:
             lines.append("**观点条目：**")
             for o in note.opinions:

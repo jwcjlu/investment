@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Dict, Any
-from engine.models import OpinionEntry, ChapterNote
+from engine.models import OpinionEntry, ChapterNote, SourceRef
 
 
 @dataclass
@@ -38,6 +38,7 @@ class Lesson:
     actionability: str
     quote: str
     tags: List[str]
+    sources: List[SourceRef] = field(default_factory=list)
 
 
 @dataclass
