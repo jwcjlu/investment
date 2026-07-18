@@ -1,8 +1,33 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import * as api from '../api'
-import type { LessonDetail } from '../api'
+import type { LessonDetail, NoteAtom, SourceRef } from '../api'
+import LogicPanel from '../components/LogicPanel'
+import SourceDrawer from '../components/SourceDrawer'
 import Layout, { ErrorBlock, LoadingBlock } from './Layout'
+
+function atomText(item: NoteAtom | string): string {
+  return typeof item === 'string' ? item : item.text
+}
+
+function atomSources(item: NoteAtom | string): SourceRef[] {
+  return typeof item === 'string' ? [] : item.sources || []
+}
+
+function SourceButton({
+  sources,
+  onOpen,
+}: {
+  sources: SourceRef[]
+  onOpen: (ref: SourceRef) => void
+}) {
+  if (!sources?.length) return null
+  return (
+    <button type="button" className="btn-link source-btn" onClick={() => onOpen(sources[0])}>
+      原文
+    </button>
+  )
+}
 
 export default function LessonPage() {
   const { id } = useParams()
@@ -14,6 +39,7 @@ export default function LessonPage() {
   const [error, setError] = useState<string | null>(null)
   const [noteLoading, setNoteLoading] = useState(false)
   const [marking, setMarking] = useState(false)
+  const [activeSource, setActiveSource] = useState<SourceRef | null>(null)
 
   useEffect(() => {
     if (!id || !encodedTag) {
@@ -96,12 +122,23 @@ export default function LessonPage() {
 
   return (
     <Layout breadcrumb={breadcrumb}>
-      <article className="lesson">
-        <h1>{lesson.opinion}</h1>
+      <article className={`lesson ${activeSource ? 'with-drawer' : ''}`}>
+        <h1>
+          {lesson.opinion}{' '}
+          <SourceButton sources={lesson.sources || []} onOpen={setActiveSource} />
+        </h1>
         <p className="lesson-meta">
           《{lesson.book_title}》{lesson.chapter} ·{' '}
           <span className="actionability-badge">{lesson.actionability}</span>
         </p>
+
+        {id && (
+          <LogicPanel
+            encodedId={id}
+            encodedTag={encodedTag}
+            onOpenSource={setActiveSource}
+          />
+        )}
 
         <section>
           <h2>论据摘要</h2>
@@ -113,35 +150,50 @@ export default function LessonPage() {
           onToggle={(e) => handleExpandNotes((e.target as HTMLDetailsElement).open)}
         >
           <summary>原文金句 &amp; 章节笔记</summary>
-          <blockquote>{lesson.quote}</blockquote>
+          <blockquote>
+            {lesson.quote}{' '}
+            <SourceButton sources={lesson.sources || []} onOpen={setActiveSource} />
+          </blockquote>
 
           {noteLoading && <p className="hint">加载章节笔记中…</p>}
 
           {lesson.chapter_note ? (
             <div className="chapter-note">
               <h3>章节笔记：{lesson.chapter_note.chapter_title}</h3>
-              <h4>核心观点</h4>
+              <h4>核心观点（原始要点）</h4>
               <ul>
                 {lesson.chapter_note.core_points.map((p, i) => (
-                  <li key={i}>{p}</li>
+                  <li key={i}>
+                    {atomText(p)}{' '}
+                    <SourceButton sources={atomSources(p)} onOpen={setActiveSource} />
+                  </li>
                 ))}
               </ul>
               <h4>论据</h4>
               <ul>
                 {lesson.chapter_note.arguments.map((a, i) => (
-                  <li key={i}>{a}</li>
+                  <li key={i}>
+                    {atomText(a)}{' '}
+                    <SourceButton sources={atomSources(a)} onOpen={setActiveSource} />
+                  </li>
                 ))}
               </ul>
               <h4>可执行建议</h4>
               <ul>
                 {lesson.chapter_note.actionables.map((a, i) => (
-                  <li key={i}>{a}</li>
+                  <li key={i}>
+                    {atomText(a)}{' '}
+                    <SourceButton sources={atomSources(a)} onOpen={setActiveSource} />
+                  </li>
                 ))}
               </ul>
               <h4>原文金句</h4>
               <ul>
                 {lesson.chapter_note.quotes.map((q, i) => (
-                  <li key={i}>{q}</li>
+                  <li key={i}>
+                    {atomText(q)}{' '}
+                    <SourceButton sources={atomSources(q)} onOpen={setActiveSource} />
+                  </li>
                 ))}
               </ul>
             </div>
@@ -173,6 +225,8 @@ export default function LessonPage() {
           )}
         </section>
       </article>
+
+      <SourceDrawer source={activeSource} onClose={() => setActiveSource(null)} />
     </Layout>
   )
 }

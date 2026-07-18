@@ -43,7 +43,7 @@ python push_to_notion.py "书名" --author "作者名"
 
 ## 学习路径网站
 
-将精读缓存重组为按主题与难度排序的本地学习路径（React SPA + FastAPI JSON API）：模块导读优先、折叠课时、AI 测验、每日软配额。
+将精读缓存重组为按主题与难度排序的本地学习路径（React SPA + FastAPI JSON API）：模块导读优先、折叠课时、AI 测验、每日软配额；课时页展示**逻辑分层 + 关系子图**，笔记旁可开**原文侧栏**（需精读时写入的 SourceRef / 章文本缓存；旧缓存无索引则不显示「原文」按钮）。
 
 **前置条件**：至少用 `python read_book.py ...` 精读过一本书，并在 `output/.cache` 下产生缓存。修改缓存后需重启服务。
 

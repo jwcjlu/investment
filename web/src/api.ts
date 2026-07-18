@@ -45,12 +45,26 @@ export interface ModuleDetail {
   lessons: LessonBrief[]
 }
 
+export interface SourceRef {
+  book_title: string
+  chapter_index: number
+  excerpt: string
+  char_start?: number | null
+  char_end?: number | null
+  para_id?: string | null
+}
+
+export interface NoteAtom {
+  text: string
+  sources: SourceRef[]
+}
+
 export interface ChapterNote {
   chapter_title: string
-  core_points: string[]
-  arguments: string[]
-  actionables: string[]
-  quotes: string[]
+  core_points: NoteAtom[]
+  arguments: NoteAtom[]
+  actionables: NoteAtom[]
+  quotes: NoteAtom[]
 }
 
 export interface LessonDetail {
@@ -60,14 +74,46 @@ export interface LessonDetail {
   encoded_tag: string
   book_title: string
   chapter: string
+  chapter_index?: number | null
   opinion: string
   argument_summary: string
   actionability: string
   quote: string
+  sources: SourceRef[]
   completed: boolean
   chapter_note: ChapterNote | null
   next_lesson_id: string | null
   next_encoded_id: string | null
+}
+
+export interface LogicStructure {
+  lesson_id: string
+  layers: { level: number; title: string; items: { node_id: string }[] }[]
+  nodes: {
+    node_id: string
+    label: string
+    kind?: string
+    sources: SourceRef[]
+    ungrounded?: boolean
+  }[]
+  edges: {
+    edge_id: string
+    from: string
+    to: string
+    rel: string
+    ungrounded?: boolean
+  }[]
+  source: string
+}
+
+export interface SourceWindow {
+  book_title: string
+  chapter_index: number
+  chapter_title: string
+  text: string
+  highlight: { start: number; end: number } | null
+  excerpt: string | null
+  degraded: boolean
 }
 
 export interface DailyResponse {
@@ -150,6 +196,29 @@ export function getLesson(encodedId: string, tag: string, expand = false) {
   const params = new URLSearchParams({ tag })
   if (expand) params.set('expand', '1')
   return fetchJson<LessonDetail>(`/lessons/${encodedId}?${params.toString()}`)
+}
+
+export function getLessonLogic(encodedId: string, tag: string, force = false) {
+  const params = new URLSearchParams({ tag })
+  if (force) params.set('force', '1')
+  return fetchJson<LogicStructure>(`/lessons/${encodedId}/logic?${params.toString()}`)
+}
+
+export function getSource(params: {
+  book: string
+  chapter: number
+  start?: number
+  end?: number
+  excerpt?: string
+}) {
+  const q = new URLSearchParams({
+    book: params.book,
+    chapter: String(params.chapter),
+  })
+  if (params.start != null) q.set('start', String(params.start))
+  if (params.end != null) q.set('end', String(params.end))
+  if (params.excerpt) q.set('excerpt', params.excerpt)
+  return fetchJson<SourceWindow>(`/source?${q.toString()}`)
 }
 
 export function completeLesson(lessonId: string) {
